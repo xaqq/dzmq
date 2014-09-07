@@ -37,9 +37,21 @@ class Socket
   }
 
   bool write(Message m)
-  {
-    return true;
-  }
+    in
+      {
+	assert(m);
+      }
+  body
+    {
+      foreach (int count, ref frame; m.frames())
+	{
+	  debug { writeln("count = ", count, "; nb frame = ", m.nbFrames()) ; }
+	  assert(zmq_msg_send(frame.getNativePtr(),
+		       zmq_socket_,
+			      count + 1 < m.nbFrames() ? cast(int) Flags.SNDMORE : 0) == 0);
+	}
+      return true;
+    }
 
 private:
   /**
@@ -70,9 +82,17 @@ immutable enum SocketType
   STREAM = 11
 }
   
+  immutable enum Flags
+  {
+  DONTWAIT = 1,
+  SNDMORE = 2
+  }
+  
   unittest
   {
-  auto s = new Socket(SocketType.REP);
-  assert(s.type_ == SocketType.REP);
-  assert(s.write(null));
+  auto s = new Socket(SocketType.REQ);
+  auto m = new Message();
+  m << "Hey";
+  assert(s.type_ == SocketType.REQ);
+  assert(s.write(m));
   }

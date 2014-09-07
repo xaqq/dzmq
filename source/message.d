@@ -43,9 +43,15 @@ public:
    * Get the number of frames contained in the Message.
    * Returns: The number of frame in the Message
    */
-  ulong frames()
+  ulong nbFrames() const
   {
     return frames_.length;
+  }
+
+  
+  Frame[] frames()
+  {
+    return frames_;
   }
   
   /**
@@ -98,9 +104,20 @@ struct Frame
     memcpy(data_ptr, &data, T.sizeof);
   }
 
+  /**
+   * Returns the size (in byte) of this message frame.
+   */
   ulong size()
   {
     return zmq_msg_size(&zmq_msg_);
+  }
+
+  /**
+   * Returns the internal pointer to zmq_msg_t;
+   */
+  zmq_msg_t *getNativePtr()
+  {
+    return &zmq_msg_;
   }
 
 private:
@@ -111,15 +128,15 @@ private:
 unittest
 {
   auto m = new Message();
-  assert(m.frames() == 0);
+  assert(m.nbFrames() == 0);
   assert(m.byteSize() == 0);
   string toto = "Hello";
   int v = 42;
 
   m << toto;
-  assert(m.frames() == 1);
+  assert(m.nbFrames() == 1);
   assert(m.byteSize() == 5);
   m << v;
-  assert(m.frames() == 2);
+  assert(m.nbFrames() == 2);
   assert(m.byteSize() == 5 + int.sizeof);
 }
