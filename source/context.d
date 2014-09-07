@@ -33,6 +33,8 @@ public:
   {
     assert(zmq_ctx_);
     int ret;
+    
+    // try to destroy the context. if we get EINTR, we keep trying.
     do
       {
 	debug
@@ -40,31 +42,45 @@ public:
 	    writeln("Terminate ZMQ context");
 	  }
 	ret = zmq_ctx_term(zmq_ctx_);
+	if (errno == EFAULT)
+	  {
+	    writeln("Invalid context...");
+	    // i don't think we can throw in destructor in D (same with C++)
+	    break;
+	  }
       }
-    while (ret == EINTR);
-    if (ret == EFAULT)
-      throw new InternalError("invalid context");
+    while (ret == -1);
     zmq_ctx_ = null;
   }
 
-
-  static this()
-  {
-    default_context = new Context();
-  }
-
   /**
-   * For ease of use, dzmq define a default context.
-   * All socket creation that do not explicitely passes a Context will use the
-   * default context.
+   * Return the native zmq pointer to the context.
+   * This should only be used by other component of the library.
    */
-  static Context default_context;
+  void *getNativePtr()
+  {
+    return zmq_ctx_;
+  }
 
 private:
   void *zmq_ctx_;
 }
 
+static this()
+  {
+    default_context = new Context();
+  }
+
+/**
+ * For ease of use, dzmq define a default context.
+ * All socket creation that do not explicitely passes a Context will use the
+ * default context.
+ */
+static Context default_context;
+
+
+
 unittest
 {
-  assert(Context.default_context);
+  assert(context.default_context);
 }

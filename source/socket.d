@@ -5,7 +5,9 @@
 module socket;
 import message;
 import zmq;
+import std.stdio;
 import std.random;
+import context;
 
 /**
  * Wraps a ZeroMQ socket.
@@ -18,6 +20,16 @@ class Socket
   this(SocketType type)
   {
     type_ = type;
+    zmq_socket_ = zmq_socket(context.default_context.getNativePtr(), cast(int) type);
+  }
+
+  ~this()
+  {
+    debug
+      {
+	writeln("Destroying Socket");
+      }
+    
   }
 
   bool write(Message m)
@@ -26,6 +38,10 @@ class Socket
   }
 
 private:
+  /**
+   * Pointer to the zmq socket. This pointer will not change.
+   */
+  const void *zmq_socket_;
   immutable SocketType type_;
 }
 
