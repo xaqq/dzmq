@@ -1,12 +1,14 @@
-module message;
 /**
+ * Contains facilities related to zeromq's message.
  * Authors: xaqq
+ *
  */
+module message;
 
 import std.stdio;
 
 /**
- * Blabla
+ * Represents a Message that can be read from or $(YELLOW written) to Socket.
  *
  */
 class Message
@@ -19,6 +21,12 @@ public:
 	writeln("New message created");
       }
   }
+
+private:
+  /**
+   * Message's frames. A valid message should have at least one frame.
+   */
+  Frame[] frames_;
 }
 
 /**

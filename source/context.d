@@ -1,3 +1,9 @@
+/**
+ * ZMQ's context and context configuration module.
+ * Authors: xaqq
+ */
+module context;
+
 import std.stdio;
 import exceptions;
 import core.stdc.errno;
@@ -10,6 +16,10 @@ import zmq;
 final class Context
 {
 public:
+  /**
+   * Construct a context using default parameter.
+   * Throws: InternalError if zmq fails to initialize a new context.
+   */
   this()
   {
     zmq_ctx_ = zmq_ctx_new();
