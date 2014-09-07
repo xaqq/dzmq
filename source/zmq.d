@@ -10,4 +10,20 @@ extern(C)
 
   void	*zmq_socket(void *context, int socket_type);
   int	zmq_close(void *socket);
+
+  int	zmq_msg_init_size(zmq_msg_t *msg, size_t size);
+
+  alias zmq_free_fn = void function(void *data, void *hint);
+  int	zmq_msg_init_data (zmq_msg_t *msg, void *data, size_t size,
+			   zmq_free_fn *ffn, void *hint);
+
+  void	*zmq_msg_data(zmq_msg_t *msg);
+
+  size_t zmq_msg_size(zmq_msg_t *msg);
+
+
+  /**
+   * Definition of the zmq_msg_t struct from ZMQ code.
+   */
+  struct zmq_msg_t { ubyte[32] _; };
 }

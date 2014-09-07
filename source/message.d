@@ -5,7 +5,9 @@
  */
 module message;
 
+import zmq;
 import std.stdio;
+import std.string;
 
 /**
  * Represents a Message that can be read from or $(YELLOW written) to Socket.
@@ -22,6 +24,43 @@ public:
       }
   }
 
+  /**
+   * Overload operator << to add some data to the message.
+   * This effectevely create a new frame and appends it to the message.
+   * Params:
+   *	op = The operator we overload, "<<" in this case.
+   *	data = The data we want to append.
+   */
+  Message opBinary(string op : "<<", T)(T data)
+  {
+    writeln("adding data");
+    frames_.length++;
+    frames_[frames_.length - 1] = Frame(data);
+    return this;
+  }
+
+  /**
+   * Get the number of frames contained in the Message.
+   * Returns: The number of frame in the Message
+   */
+  ulong frames()
+  {
+    return frames_.length;
+  }
+  
+  /**
+   * Get the total size (in bytes) of the message.
+   */
+  ulong byteSize()
+  {
+    ulong ret = 0;
+    foreach (ref frame; frames_)
+      {
+	ret += frame.size();
+      }
+    return ret;
+  }
+
 private:
   /**
    * Message's frames. A valid message should have at least one frame.
@@ -36,5 +75,51 @@ private:
  */
 struct Frame
 {
-  
+  /**
+   * Construct a new frame from a string
+   */
+  this(string data)
+  {
+    assert(zmq_msg_init_size(&zmq_msg_, data.length) == 0);
+    void *data_ptr = zmq_msg_data(&zmq_msg_);
+
+    memcpy(data_ptr, data.toStringz(), data.length);
+  }
+
+  /**
+   * Construct a new frame from any type.
+   * This does a binary copy of the data.
+   */
+  this(T)(T data)
+  {
+    assert(zmq_msg_init_size(&zmq_msg_, T.sizeof) == 0);
+    void *data_ptr = zmq_msg_data(&zmq_msg_);
+
+    memcpy(data_ptr, &data, T.sizeof);
+  }
+
+  ulong size()
+  {
+    return zmq_msg_size(&zmq_msg_);
+  }
+
+private:
+  zmq_msg_t zmq_msg_;
+}
+
+
+unittest
+{
+  auto m = new Message();
+  assert(m.frames() == 0);
+  assert(m.byteSize() == 0);
+  string toto = "Hello";
+  int v = 42;
+
+  m << toto;
+  assert(m.frames() == 1);
+  assert(m.byteSize() == 5);
+  m << v;
+  assert(m.frames() == 2);
+  assert(m.byteSize() == 5 + int.sizeof);
 }

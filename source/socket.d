@@ -8,6 +8,7 @@ import zmq;
 import std.stdio;
 import std.random;
 import context;
+import exceptions;
 
 /**
  * Wraps a ZeroMQ socket.
@@ -68,8 +69,8 @@ immutable enum SocketType
   XSUB = 10,
   STREAM = 11
 }
-
-unittest
+  
+  unittest
   {
   auto s = new Socket(SocketType.REP);
   assert(s.type_ == SocketType.REP);
