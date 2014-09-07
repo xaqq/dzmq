@@ -1,3 +1,4 @@
+module message;
 /**
  * Authors: xaqq
  */
