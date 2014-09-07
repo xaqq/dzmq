@@ -21,15 +21,18 @@ class Socket
   {
     type_ = type;
     zmq_socket_ = zmq_socket(context.default_context.getNativePtr(), cast(int) type);
+
+    if (!zmq_socket_)
+      {
+	throw new InternalError("cannot create socket");
+      }
   }
 
   ~this()
   {
-    debug
-      {
-	writeln("Destroying Socket");
-      }
-    
+    assert(zmq_socket_);
+    debug writeln("Destroying Socket");
+    zmq_close(zmq_socket_);
   }
 
   bool write(Message m)
@@ -39,9 +42,10 @@ class Socket
 
 private:
   /**
-   * Pointer to the zmq socket. This pointer will not change.
+   * Pointer to the zmq socket. This pointer will not change. 
+   * how to const pointer?
    */
-  const void *zmq_socket_;
+  void *zmq_socket_;
   immutable SocketType type_;
 }
 
