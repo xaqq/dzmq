@@ -45,7 +45,6 @@ public:
     return frames_.length;
   }
 
-  
   Frame[] frames()
   {
     return frames_;
@@ -87,7 +86,7 @@ struct Frame
   /**
    * Construct a new frame from a string
    */
-  this(string data)
+  this(in string data)
   {
     assert(zmq_msg_init_size(&zmq_msg_, data.length) == 0);
     void *data_ptr = zmq_msg_data(&zmq_msg_);
@@ -104,7 +103,7 @@ struct Frame
    * Construct a new frame from any type.
    * This does a binary copy of the data.
    */
-  this(T)(T data)
+  this(T)(in T data)
   {
     assert(zmq_msg_init_size(&zmq_msg_, T.sizeof) == 0);
     void *data_ptr = zmq_msg_data(&zmq_msg_);

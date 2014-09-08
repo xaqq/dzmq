@@ -19,6 +19,25 @@ install:
   - wget http://code.dlang.org/files/${DUB}.tar.gz
   - sudo tar -C /usr/local/bin -zxf ${DUB}.tar.gz
 
+before_script:
+  # Install libsodium for curve related test
+  - git clone git://github.com/jedisct1/libsodium.git
+  - cd libsodium
+  - ./autogen.sh
+  - ./configure && make -j4
+  - sudo make install
+  - sudo ldconfig
+  - cd ..
+
+  # Perform regression test build against ZeroMQ v4.x
+  - git clone git://github.com/zeromq/zeromq4-x.git
+  - cd zeromq4-x
+  - ./autogen.sh
+  - ./configure && make -j4
+  - sudo make install
+  - sudo ldconfig
+  - cd ..
+
 script:
   - dub test
 
