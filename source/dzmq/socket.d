@@ -2,14 +2,15 @@
  * Facilities to manage zmq's sockets.
  * Authors: xaqq
  */   
-module socket;
-import message;;
-import zmq;;
+module dzmq.socket;
+
 import std.stdio;
 import std.random;
 import core.stdc.errno;
-import context;;
-import exceptions;;
+import dzmq.message;
+import dzmq.zmq;
+import context = dzmq.context;
+import dzmq.exceptions;
 
 /**
  * Wraps a ZeroMQ socket.

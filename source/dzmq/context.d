@@ -2,12 +2,13 @@
  * ZMQ's context and context configuration module.
  * Authors: xaqq
  */
-module context;
+module dzmq.context;
+alias context = dzmq.context;
 
 import std.stdio;
-import exceptions;
 import core.stdc.errno;
-import zmq;
+import dzmq.exceptions;
+import dzmq.zmq;
 
 /**
  * Abstraction of a ZeroMQ context.

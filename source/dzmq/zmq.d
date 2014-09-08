@@ -1,7 +1,7 @@
 /**
  * Module that declare ZeroMQ's C API functions.
  */
-module zmq;
+module dzmq.zmq;
 
 extern(C)
 {

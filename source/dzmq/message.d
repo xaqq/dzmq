@@ -3,9 +3,9 @@
  * Authors: xaqq
  *
  */
-module message;
+module dzmq.message;
 
-import zmq;;
+import dzmq.zmq;
 import std.stdio;
 import std.string;
 
