@@ -5,9 +5,10 @@
  */
 module dzmq.message;
 
-import dzmq.zmq;
+import std.typecons;
 import std.stdio;
 import std.string;
+import dzmq.zmq;
 
 /**
  * Represents a Message that can be read from or $(YELLOW written) to Socket.
@@ -16,9 +17,14 @@ import std.string;
 class Message
 {
 public:
-  this()
+  this(string msg = "")
   {
-    debug writeln("New message created");
+    debug writeln("New message created", msg);
+  }
+
+  ~this()
+  {
+    debug writeln("destroying message");
   }
 
   /**
@@ -31,7 +37,7 @@ public:
   Message opBinary(string op : "<<", T)(T data)
   {
     writeln("adding data");
-    frames_ ~= Frame(data);
+    frames_ ~= new Frame(data);
     writeln("done adding data");
     return this;
   }
@@ -66,6 +72,8 @@ public:
   void reset()
   {
     debug writeln("Resetting message");
+    foreach (f ; frames_)
+      f.destroy();
     frames_ = [];
   }
 
@@ -79,9 +87,9 @@ private:
 /**
  * A message's frame. A multi-part message has multiple frame
  * internally.
- * It's unlikely that this struct be used by library user.
+ * It's unlikely that this class be used by library user.
  */
-struct Frame
+class Frame
 {
   /**
    * Construct a new frame from a string
@@ -92,11 +100,6 @@ struct Frame
     void *data_ptr = zmq_msg_data(&zmq_msg_);
 
     memcpy(data_ptr, data.toStringz(), data.length);
-  }
-
-  this(this)
-  {
-    debug writeln("POSTBLIT");
   }
 
   /**
@@ -120,7 +123,7 @@ struct Frame
   /**
    * Returns the size (in byte) of this message frame.
    */
-  ulong size()
+   ulong size()
   {
     return zmq_msg_size(&zmq_msg_);
   }
@@ -131,15 +134,6 @@ struct Frame
   zmq_msg_t *getNativePtr()
   {
     return &zmq_msg_;
-  }
-
-  /**
-   * warning: maybe this is wrong
-   */
-  void opAssign(Frame s)
-  {
-    debug writeln("Assigning Frame");
-    this.zmq_msg_ = s.zmq_msg_;
   }
 
 private:

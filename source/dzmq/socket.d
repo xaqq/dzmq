@@ -31,8 +31,12 @@ class Socket
         "Cannot create socket");
   }
 
+  // commenting this prevent infinite wait... wtf?
+  Message blabkla;
+
   ~this()
   {
+    //    bla.destroy();
     assert(zmq_socket_);
     debug writeln("Destroying Socket");
     zmq_close(zmq_socket_);
@@ -70,6 +74,7 @@ class Socket
       }
   body
     {
+      //     bla = m;
       foreach (int count, ref frame; m.frames())
 	{
 	  debug { writeln("count = ", count, "; nb frame = ", m.nbFrames()) ; }
@@ -78,7 +83,6 @@ class Socket
 	    flags |= Flags.DONTWAIT;
 	  if (count + 1 < m.nbFrames())
 	    flags |= Flags.SNDMORE;
-
 	  if (zmq_msg_send(frame.getNativePtr(), zmq_socket_, flags) == -1)
 	    {
 	      if (EAGAIN == errno)
@@ -105,8 +109,8 @@ class Socket
    */
   bool write(in string msg, bool dontwait = true)
   {
-    auto m = new Message();
-    //    auto m = scoped!Message();
+    //auto m = new Message();
+    auto m = scoped!Message();
     m << msg;
 
     return write(m, dontwait);
