@@ -18,3 +18,16 @@ class DZMQInternalError : Exception
         super("Internal library error: " ~ msg, file, line, next);
     }
 }
+
+class DZMQContextTerminated : Exception
+{
+    @safe pure nothrow this(string file = __FILE__, size_t line = __LINE__, Throwable next = null)
+    {
+      super("Context was terminated", file, line, next);
+    }
+
+    @safe pure nothrow this(Throwable next, string file = __FILE__, size_t line = __LINE__)
+    {
+        super("Context was terminated", file, line, next);
+    }
+}

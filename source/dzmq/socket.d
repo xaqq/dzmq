@@ -25,17 +25,21 @@ class Socket
    */
   this(SocketType type)
   {
+    this(type, dzmq.context.default_context);
+  }
+
+  this(SocketType type, Context c)
+  {
     type_ = type;
     zmq_socket_ = enforceEx!DZMQInternalError(
-        zmq_socket(default_context.getNativePtr(), cast(int)type),
+        zmq_socket(c.getNativePtr(), cast(int)type),
         "Cannot create socket");
   }
 
   ~this()
   {
-    assert(zmq_socket_);
     debug writeln("Destroying Socket");
-    zmq_close(zmq_socket_);
+    close();
   }
 
   /**
@@ -60,6 +64,7 @@ class Socket
    * After being sent, a message becomes empty: this is because zmq take ownership of data
    * so its not safe anymore to keep it.
    *
+   * If the context was terminated during the operation, the socket will be closed.
    * Throws: DZMQInternalError in case something went badly wrong.
    * Returns: true if the message was sent. false if dontwait is true and would have blocked.
    */
@@ -93,6 +98,11 @@ class Socket
 		  if (count == 0)
 		    return false;
 		}
+	      if (ETERM == errno)
+		{
+		  close();
+		  throw new DZMQContextTerminated();
+		}
 	      throw new DZMQInternalError("Unable to send a message");
 	    }
 	}
@@ -100,6 +110,16 @@ class Socket
       return true;
     }
 
+  /**
+   * Close the socket.
+   */
+  void close()
+  {
+    assert(zmq_socket_);
+    zmq_close(zmq_socket_);
+  }
+
+  Message m;
   /**
    * Helper method to send a single string message.
    */
@@ -111,7 +131,6 @@ class Socket
 
     return write(m, dontwait);
   }
-
 private:
   /**
    * Pointer to the zmq socket. This pointer will not change. 
@@ -135,6 +154,9 @@ unittest
   assert(!s2.write("hello")); // fails because not connected yet and noblock
   assert(s2.connect("inproc://test-1"));
   assert(s2.write("hello"));
+
+  s.destroy();
+  s2.destroy();
 }
 
 /**
@@ -155,16 +177,23 @@ unittest
 
   assert(m.nbFrames() == 0, "invalid number of frame");   // doesnt work yet
   assert(m.byteSize() == 0, "invalid message size");
+
+  s.destroy();
+}
+
+unittest
+{
+  
 }
   
 unittest {
-  auto s = new Socket(SocketType.REQ);
+  auto s = scoped!Socket(SocketType.REQ);
   auto m = new Message();
   m << "Hey";
   // assert(s.type_ == SocketType.REQ);
   // assert(!s.write(m));
   
-  // auto s2 = new Socket(SocketType.REP);
+  // auto s2 = scoped!Socket(SocketType.REP);
   // assert(s.write(m));
 }
 

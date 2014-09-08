@@ -28,4 +28,13 @@ extern(C)
    * Definition of the zmq_msg_t struct from ZMQ code.
    */
   struct zmq_msg_t { ubyte[32] _; };
+
+
+  /**
+   * A number random enough not to collide with different errno ranges on different OSes.
+   * See zmq.h
+   */
+  immutable ZMQ_HAUSNUMERO = 156384712;
+
+  immutable ETERM = ZMQ_HAUSNUMERO + 53;
 }
