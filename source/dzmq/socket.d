@@ -10,6 +10,7 @@ import core.stdc.errno;
 import std.string;
 import std.typecons;
 import std.algorithm;
+import std.conv;
 import dzmq.message;
 import dzmq.zmq;
 import context = dzmq.context;
@@ -99,9 +100,7 @@ class Socket
 	      throw new InternalError();
 	    }
 	}
-      
-      // need to reset the object pointed to by m. similar to std::swap 
-      //      m = new Message();
+      m.reset();
       return true;
     }
 
