@@ -104,6 +104,12 @@ struct Frame
     memcpy(data_ptr, &data, T.sizeof);
   }
 
+  ~this()
+  {
+    debug writeln("Destroying frame");
+    assert(zmq_msg_close(&zmq_msg_) == 0);
+  }
+
   /**
    * Returns the size (in byte) of this message frame.
    */
@@ -120,10 +126,17 @@ struct Frame
     return &zmq_msg_;
   }
 
+  /**
+   * warning: maybe this is wrong
+   */
+  void opAssign(Frame s)
+  {
+    this.zmq_msg_ = s.zmq_msg_;
+  }
+
 private:
   zmq_msg_t zmq_msg_;
 }
-
 
 unittest
 {
