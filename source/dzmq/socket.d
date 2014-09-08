@@ -3,12 +3,13 @@
  * Authors: xaqq
  */   
 module socket;
-import message;
-import zmq;
+import message;;
+import zmq;;
 import std.stdio;
 import std.random;
-import context;
-import exceptions;
+import core.stdc.errno;
+import context;;
+import exceptions;;
 
 /**
  * Wraps a ZeroMQ socket.
@@ -36,7 +37,7 @@ class Socket
     zmq_close(zmq_socket_);
   }
 
-  bool write(Message m)
+  bool write(Message m, bool dontwait = true)
     in
       {
 	assert(m);
@@ -46,9 +47,28 @@ class Socket
       foreach (int count, ref frame; m.frames())
 	{
 	  debug { writeln("count = ", count, "; nb frame = ", m.nbFrames()) ; }
-	  assert(zmq_msg_send(frame.getNativePtr(),
-		       zmq_socket_,
-			      count + 1 < m.nbFrames() ? cast(int) Flags.SNDMORE : 0) == 0);
+	  int flags = 0;
+	  if (dontwait)
+	    flags |= Flags.DONTWAIT;
+	  if (count + 1 < m.nbFrames())
+	    flags |= Flags.SNDMORE;
+
+	  if (zmq_msg_send(frame.getNativePtr(), zmq_socket_, flags) == -1)
+	    {
+	      if (EAGAIN == errno)
+		{
+		  // should only block on first part
+		  assert(count == 0);
+		  return false;
+		}
+	      if (EINTR == errno)
+		{
+		  assert(dontwait == false);
+		  if (count == 0)
+		    return false;
+		}
+	      throw new InternalError();
+	    }
 	}
       return true;
     }
@@ -94,5 +114,9 @@ immutable enum SocketType
   auto m = new Message();
   m << "Hey";
   assert(s.type_ == SocketType.REQ);
+  assert(!s.write(m));
+  
+  auto s2 = new Socket(SocketType.REP);
   assert(s.write(m));
+
   }

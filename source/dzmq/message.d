@@ -5,7 +5,7 @@
  */
 module message;
 
-import zmq;
+import zmq;;
 import std.stdio;
 import std.string;
 
