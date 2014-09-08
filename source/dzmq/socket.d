@@ -6,7 +6,6 @@ module dzmq.socket;
 
 debug import std.stdio;
 
-import std.algorithm;
 import std.exception : enforceEx;
 import std.string;
 import std.typecons;
@@ -97,9 +96,7 @@ class Socket
 	      throw new DZMQInternalError("Unable to send a message");
 	    }
 	}
-      
-      // need to reset the object pointed to by m. similar to std::swap 
-      //      m = new Message();
+      m.reset();
       return true;
     }
 

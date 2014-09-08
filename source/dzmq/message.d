@@ -31,8 +31,8 @@ public:
   Message opBinary(string op : "<<", T)(T data)
   {
     writeln("adding data");
-    frames_.length++;
-    frames_[frames_.length - 1] = Frame(data);
+    frames_ ~= Frame(data);
+    writeln("done adding data");
     return this;
   }
 
@@ -64,6 +64,12 @@ public:
     return ret;
   }
 
+  void reset()
+  {
+    debug writeln("Resetting message");
+    frames_ = [];
+  }
+
 private:
   /**
    * Message's frames. A valid message should have at least one frame.
@@ -87,6 +93,11 @@ struct Frame
     void *data_ptr = zmq_msg_data(&zmq_msg_);
 
     memcpy(data_ptr, data.toStringz(), data.length);
+  }
+
+  this(this)
+  {
+    debug writeln("POSTBLIT");
   }
 
   /**
@@ -128,6 +139,7 @@ struct Frame
    */
   void opAssign(Frame s)
   {
+    debug writeln("Assigning Frame");
     this.zmq_msg_ = s.zmq_msg_;
   }
 
