@@ -119,14 +119,12 @@ class Socket
     zmq_close(zmq_socket_);
   }
 
-  Message m;
   /**
    * Helper method to send a single string message.
    */
   bool write(in string msg, bool dontwait = true)
   {
-    auto m = new Message();
-    //    auto m = scoped!Message();
+    auto m = scoped!Message();
     m << msg;
 
     return write(m, dontwait);

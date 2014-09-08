@@ -31,7 +31,7 @@ public:
   Message opBinary(string op : "<<", T)(T data)
   {
     writeln("adding data");
-    frames_ ~= Frame(data);
+    frames_ ~= new Frame(data);
     writeln("done adding data");
     return this;
   }
@@ -79,9 +79,9 @@ private:
 /**
  * A message's frame. A multi-part message has multiple frame
  * internally.
- * It's unlikely that this struct be used by library user.
+ * It's unlikely that this class be used by library user.
  */
-struct Frame
+class Frame
 {
   /**
    * Construct a new frame from a string
@@ -92,11 +92,6 @@ struct Frame
     void *data_ptr = zmq_msg_data(&zmq_msg_);
 
     memcpy(data_ptr, data.toStringz(), data.length);
-  }
-
-  this(this)
-  {
-    debug writeln("POSTBLIT");
   }
 
   /**
@@ -133,15 +128,6 @@ struct Frame
     return &zmq_msg_;
   }
 
-  /**
-   * warning: maybe this is wrong
-   */
-  void opAssign(Frame s)
-  {
-    debug writeln("Assigning Frame");
-    this.zmq_msg_ = s.zmq_msg_;
-  }
-
 private:
   zmq_msg_t zmq_msg_;
 }
@@ -151,13 +137,14 @@ unittest
   auto m = new Message();
   assert(m.nbFrames() == 0);
   assert(m.byteSize() == 0);
-  string toto = "Hello";
+  string toto = "HelloAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
   int v = 42;
 
   m << toto;
   assert(m.nbFrames() == 1);
-  assert(m.byteSize() == 5);
+  assert(m.byteSize() == toto.length);
   m << v;
+
   assert(m.nbFrames() == 2);
-  assert(m.byteSize() == 5 + int.sizeof);
+  assert(m.byteSize() == toto.length + int.sizeof);
 }
