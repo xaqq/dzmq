@@ -4,15 +4,16 @@
  */   
 module dzmq.socket;
 
-import std.stdio;
-import std.random;
-import core.stdc.errno;
+debug import std.stdio;
+
+import std.algorithm;
+import std.exception : enforceEx;
 import std.string;
 import std.typecons;
-import std.algorithm;
+import core.stdc.errno;
 import dzmq.message;
 import dzmq.zmq;
-import context = dzmq.context;
+import dzmq.context;
 import dzmq.exceptions;
 
 /**
@@ -26,12 +27,9 @@ class Socket
   this(SocketType type)
   {
     type_ = type;
-    zmq_socket_ = zmq_socket(context.default_context.getNativePtr(), cast(int) type);
-
-    if (!zmq_socket_)
-      {
-	throw new InternalError("cannot create socket");
-      }
+    zmq_socket_ = enforceEx!DZMQInternalError(
+        zmq_socket(default_context.getNativePtr(), cast(int)type),
+        "Cannot create socket");
   }
 
   ~this()
@@ -63,7 +61,7 @@ class Socket
    * After being sent, a message becomes empty: this is because zmq take ownership of data
    * so its not safe anymore to keep it.
    *
-   * Throws: InternalError in case something went badly wrong.
+   * Throws: DZMQInternalError in case something went badly wrong.
    * Returns: true if the message was sent. false if dontwait is true and would have blocked.
    */
   bool write(Message m, bool dontwait = true)
@@ -96,7 +94,7 @@ class Socket
 		  if (count == 0)
 		    return false;
 		}
-	      throw new InternalError();
+	      throw new DZMQInternalError("Unable to send a message");
 	    }
 	}
       
@@ -162,8 +160,7 @@ unittest
   assert(m.byteSize() == 0, "invalid message size");
 }
   
-  unittest
-  {
+unittest {
   auto s = new Socket(SocketType.REQ);
   auto m = new Message();
   m << "Hey";
@@ -172,32 +169,29 @@ unittest
   
   // auto s2 = new Socket(SocketType.REP);
   // assert(s.write(m));
-
-  }
+}
 
 
 /**
  * Type of the socket. See $(LINK http://api.zeromq.org/4-1:zmq-socket) for
  * an overview of ZMQ's socket type.
  */
-immutable enum SocketType
-{
-  PAIR = 0,
-  PUB = 1,
-  SUB = 2,
-  REQ = 3,
-  REP = 4,
-  DEALER = 5,
-  ROUTER = 6,
-  PULL = 7,
-  PUSH = 8,
-  XPUB = 9,
-  XSUB = 10,
-  STREAM = 11
+enum SocketType {
+    PAIR = 0,
+    PUB = 1,
+    SUB = 2,
+    REQ = 3,
+    REP = 4,
+    DEALER = 5,
+    ROUTER = 6,
+    PULL = 7,
+    PUSH = 8,
+    XPUB = 9,
+    XSUB = 10,
+    STREAM = 11
 }
   
-  immutable enum Flags
-  {
-  DONTWAIT = 1,
-  SNDMORE = 2
-  }
+enum Flags {
+    DONTWAIT = 1,
+    SNDMORE = 2
+}

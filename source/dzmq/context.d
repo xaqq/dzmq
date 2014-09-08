@@ -3,8 +3,8 @@
  * Authors: xaqq
  */
 module dzmq.context;
-alias context = dzmq.context;
 
+import std.exception : enforceEx;
 import std.stdio;
 import core.stdc.errno;
 import dzmq.exceptions;
@@ -19,15 +19,11 @@ final class Context
 public:
   /**
    * Construct a context using default parameter.
-   * Throws: InternalError if zmq fails to initialize a new context.
+   * Throws: DZMQInternalError if zmq fails to initialize a new context.
    */
   this()
   {
-    zmq_ctx_ = zmq_ctx_new();
-    if (!zmq_ctx_)
-      {
-	throw new InternalError();
-      }
+      zmq_ctx_ = enforceEx!DZMQInternalError(zmq_ctx_new(), "Cannot initialize context");
   }
 
   ~this()
@@ -79,9 +75,7 @@ static this()
  */
 static Context default_context;
 
-
-
 unittest
 {
-  assert(context.default_context);
+  assert(default_context);
 }

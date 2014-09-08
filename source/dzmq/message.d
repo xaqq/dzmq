@@ -18,10 +18,7 @@ class Message
 public:
   this()
   {
-    debug
-      {
-	writeln("New message created");
-      }
+    debug writeln("New message created");
   }
 
   /**

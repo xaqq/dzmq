@@ -6,10 +6,15 @@ module dzmq.exceptions;
 
 import std.exception;
 
-class InternalError : Exception
+class DZMQInternalError : Exception
 {
-  this(string message = "")
-  {
-    super("Internal library error: " ~ message);
-  }
+    @safe pure nothrow this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null)
+    {
+        super("Internal library error: " ~ msg, file, line, next);
+    }
+
+    @safe pure nothrow this(string msg, Throwable next, string file = __FILE__, size_t line = __LINE__)
+    {
+        super("Internal library error: " ~ msg, file, line, next);
+    }
 }
