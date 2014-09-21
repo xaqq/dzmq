@@ -6,6 +6,7 @@ module dzmq.socket;
 
 debug import std.stdio;
 
+import std.conv;
 import std.exception : enforceEx;
 import std.string;
 import std.typecons;
@@ -111,31 +112,49 @@ class Socket
       return true;
     }
 
-  bool setOption(T)(SocketOption o, T value)
+  bool setOption(T)(SocketOption o, T value) if (!is(T == string))
   {
     assert(zmq_setsockopt(zmq_socket_, cast(int)o, &value, value.sizeof) == 0);
     return true;
   }
 
+  bool setOption(T : string)(SocketOption o, T value)
+    {
+      assert(zmq_setsockopt(zmq_socket_, cast(int)o, value.toStringz(), value.length) == 0);
+      return true;
+    }
+
   T getOption(T)(SocketOption o)
   {
     T value;
-
-    static if (is (T == string))
+    ubyte buff[300];
+    size_t len = buff.sizeof;
+    debug writeln("Len = ", len);
+    static if (is(T == int))
+      len = T.sizeof;
+    assert(zmq_getsockopt(zmq_socket_, cast(int)o, &buff, &len) == 0);
+    
+    auto tmp = buff[0..len];
+    static if (is(T == ubyte[]))
       {
-	value.reserve(400);
-	size_t len = value.capacity;
+	return tmp.dup;
+      }
+    static if (is(T == string))
+      {
+	value ~= cast(char[])tmp;
+	debug writeln("hey:", value);
+	return value;
+      }
+    static if (is(T == int))
+      {
+	memcpy(&value, &buff[0], len);
+	return value;
       }
     else
-      size_t len = value.sizeof;
-    debug writeln("Len = ", len);
-    assert(zmq_getsockopt(zmq_socket_, cast(int)o, &value, &len) == 0);
- 
-    static if (is (T == string))
       {
-	debug writeln("after, len = ", len, " v = {", value, "}, vsize = ", value.length);
+	// how to fail at compile time?
+	//	static assert (0);
       }
-    return value;
   }
   
   /**
@@ -224,10 +243,11 @@ unittest
 {
   auto s = scoped!Socket(SocketType.PUSH);
 
-  assert(s.setOption(SocketOption.identity, "lamaSticot \0\0___________________________________dada"));
-  string b = s.getOption!string(SocketOption.identity);
-
-  assert(b == "lamaSticot \0\0___________________________________dada");
+  assert(s.setOption(SocketOption.identity, "lamaSticot \0\0llllllllllllllllllllllllllllllllllldada"));
+  ubyte b[] = s.getOption!(ubyte[])(SocketOption.identity);
+  assert(b == "lamaSticot \0\0llllllllllllllllllllllllllllllllllldada");
+  string str = s.getOption!string(SocketOption.identity);
+  assert(str == "lamaSticot \0\0llllllllllllllllllllllllllllllllllldada");
 
   //  string too_long = "a";
   //  foreach (int i ; 1..300)
