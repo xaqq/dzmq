@@ -39,7 +39,8 @@ class Socket
   ~this()
   {
     debug writeln("Destroying Socket");
-    close();
+    if (zmq_socket_)
+      close();
   }
 
   /**
@@ -110,13 +111,40 @@ class Socket
       return true;
     }
 
+  bool setOption(T)(SocketOption o, T value)
+  {
+    assert(zmq_setsockopt(zmq_socket_, cast(int)o, &value, value.sizeof) == 0);
+    return true;
+  }
+
+  T getOption(T)(SocketOption o)
+  {
+    T value;
+
+    static if (is (T == string))
+      {
+	value.reserve(400);
+	size_t len = value.capacity;
+      }
+    else
+      size_t len = value.sizeof;
+    debug writeln("Len = ", len);
+    assert(zmq_getsockopt(zmq_socket_, cast(int)o, &value, &len) == 0);
+ 
+    static if (is (T == string))
+      {
+	debug writeln("after, len = ", len, " v = {", value, "}, vsize = ", value.length);
+      }
+    return value;
+  }
+  
   /**
    * Close the socket.
    */
   void close()
   {
-    assert(zmq_socket_);
-    zmq_close(zmq_socket_);
+    assert(zmq_close(zmq_socket_) == 0);
+    zmq_socket_ = null;
   }
 
   /**
@@ -124,12 +152,9 @@ class Socket
    */
   bool write(in string msg, bool dontwait = true)
   {
-    debug writeln("Writing string message {", msg, "}");
-    debug scope (exit) writeln("Done writing string message");
     auto m = scoped!Message();
     m << msg;
 
-    //    scope(exit) m.destroy();
     return write(m, dontwait);
   }
 private:
@@ -146,18 +171,15 @@ private:
  */
 unittest
 {
-  auto s = new Socket(SocketType.ROUTER);
+  auto s = scoped!Socket(SocketType.ROUTER);
   assert(s.bind("inproc://test-1"));
   assert(s.bind("inproc://test-2"));
   assert(!s.bind("inproc://test-2"));
 
-  auto s2 = new Socket(SocketType.DEALER);
+  auto s2 = scoped!Socket(SocketType.DEALER);
   assert(!s2.write("hello")); // fails because not connected yet and noblock
   assert(s2.connect("inproc://test-1"));
   assert(s2.write("hello"));
-
-  s.destroy();
-  s2.destroy();
 }
 
 /**
@@ -185,12 +207,34 @@ unittest
 
 unittest
 {
-  auto c = new Context();
-  auto s = new Socket(SocketType.REQ, c);
-  writeln("lama");
+  auto c = scoped!Context();
+  auto s = scoped!Socket(SocketType.PUSH, c);
 
-  s.destroy();
-  c.destroy();
+  assert(s.connect("tcp://127.0.0.1:4242"));
+  assert(s.write("HELLO"));
+  
+  writeln("lama");
+  s.setOption(SocketOption.linger, 1000);
+}
+
+/**
+ * Tests that we can set and get socket options.
+ */
+unittest
+{
+  auto s = scoped!Socket(SocketType.PUSH);
+
+  assert(s.setOption(SocketOption.identity, "lamaSticot \0\0___________________________________dada"));
+  string b = s.getOption!string(SocketOption.identity);
+
+  assert(b == "lamaSticot \0\0___________________________________dada");
+
+  //  string too_long = "a";
+  //  foreach (int i ; 1..300)
+  //    too_long ~= "a";
+
+  //  assert(!s.setOption(SocketOption.identity, too_long));
+  assert(s.getOption!int(SocketOption.linger) == -1, "wrong default linger value");
 }
   
 unittest {
@@ -227,4 +271,9 @@ enum SocketType {
 enum Flags {
     DONTWAIT = 1,
     SNDMORE = 2
+}
+
+enum SocketOption {
+  linger = ZMQ_LINGER,
+  identity = ZMQ_IDENTITY
 }

@@ -30,6 +30,9 @@ extern(C)
   struct zmq_msg_t { ubyte[48] _; };
 
 
+  int zmq_setsockopt (void *socket, int option_name, const void *option_value, size_t option_len);
+
+  int zmq_getsockopt (void *socket, int option_name, void *option_value, size_t *option_len);
   /**
    * A number random enough not to collide with different errno ranges on different OSes.
    * See zmq.h
@@ -37,4 +40,8 @@ extern(C)
   immutable ZMQ_HAUSNUMERO = 156384712;
 
   immutable ETERM = ZMQ_HAUSNUMERO + 53;
+
+  immutable ZMQ_LINGER = 17;
+  immutable ZMQ_IDENTITY = 5;
+
 }
