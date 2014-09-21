@@ -27,7 +27,7 @@ extern(C)
   /**
    * Definition of the zmq_msg_t struct from ZMQ code.
    */
-  struct zmq_msg_t { ubyte[32] _; };
+  struct zmq_msg_t { ubyte[48] _; };
 
 
   /**

@@ -21,6 +21,14 @@ public:
     debug writeln("New message created");
   }
 
+  ~this()
+  {
+    debug writeln("Destroying message");
+    foreach (Frame f; frames_)
+      f.destroy();
+    frames_ = [];
+  }
+
   /**
    * Overload operator << to add some data to the message.
    * This effectevely create a new frame and appends it to the message.
@@ -56,7 +64,7 @@ public:
   ulong byteSize()
   {
     ulong ret = 0;
-    foreach (ref frame; frames_)
+    foreach (frame; frames_)
       {
 	ret += frame.size();
       }
@@ -66,6 +74,8 @@ public:
   void reset()
   {
     debug writeln("Resetting message");
+    foreach(f ; frames_)
+      f.destroy();
     frames_ = [];
   }
 
@@ -93,7 +103,7 @@ class Frame
 
     memcpy(data_ptr, data.toStringz(), data.length);
   }
-
+  
   /**
    * Construct a new frame from any type.
    * This does a binary copy of the data.
@@ -106,8 +116,13 @@ class Frame
     memcpy(data_ptr, &data, T.sizeof);
   }
 
+  bool no_destroy = true;
+
   ~this()
   {
+    assert(no_destroy);
+    no_destroy = false;
+
     debug writeln("Destroying frame");
     assert(zmq_msg_close(&zmq_msg_) == 0);
   }
@@ -128,6 +143,7 @@ class Frame
     return &zmq_msg_;
   }
 
+
 private:
   zmq_msg_t zmq_msg_;
 }
@@ -147,4 +163,5 @@ unittest
 
   assert(m.nbFrames() == 2);
   assert(m.byteSize() == toto.length + int.sizeof);
+  m.destroy();
 }

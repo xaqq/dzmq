@@ -124,9 +124,12 @@ class Socket
    */
   bool write(in string msg, bool dontwait = true)
   {
+    debug writeln("Writing string message {", msg, "}");
+    debug scope (exit) writeln("Done writing string message");
     auto m = scoped!Message();
     m << msg;
 
+    //    scope(exit) m.destroy();
     return write(m, dontwait);
   }
 private:
@@ -176,12 +179,18 @@ unittest
   assert(m.nbFrames() == 0, "invalid number of frame");   // doesnt work yet
   assert(m.byteSize() == 0, "invalid message size");
 
+  m.destroy();
   s.destroy();
 }
 
 unittest
 {
-  
+  auto c = new Context();
+  auto s = new Socket(SocketType.REQ, c);
+  writeln("lama");
+
+  s.destroy();
+  c.destroy();
 }
   
 unittest {
